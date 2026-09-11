@@ -151,28 +151,9 @@ Remove exact duplicate customer-response pairs
 Final retrieval/training dataset
 ```
 
-## 5.1 Removing unnecessary columns
-
-The original Twitter dataset contains metadata required to construct conversation relationships but not required by the final AI pipeline.
-
-After constructing the customer → AmazonHelp pairs, the pipeline keeps the fields required for modelling:
-
-```text
-customer_tweet_id
-customer_id
-customer_created_at
-customer_message
-amazon_tweet_id
-amazon_created_at
-amazon_response
-language
-```
-
-The final modelling dataset does not require the other raw Twitter fields.
-
 ---
 
-## 5.2 Text cleaning
+## 5. Text cleaning
 
 Twitter messages contain a significant amount of noise such as:
 
