@@ -481,7 +481,7 @@ The response generator uses a Groq-hosted LLM through LangChain.
 The model used during development was:
 
 ```text
-llama-3.3-70b-versatile
+qwen/qwen3.8-27b
 ```
 
 The generation pipeline is:
