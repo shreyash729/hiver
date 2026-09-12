@@ -6,5 +6,7 @@ torch
 langchain
 langchain-core
 langchain-groq
-json
+langid
+re
+html
 os

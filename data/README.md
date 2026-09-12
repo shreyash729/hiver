@@ -14,7 +14,6 @@ classification and a larger historical corpus used for retrieval.
 
 The original source is the Customer Support on Twitter dataset:
 
-`thoughtvector/customer-support-on-twitter`
 - `https://www.kaggle.com/datasets/thoughtvector/customer-support-on-twitter`
 
 The original dataset should be obtained from its official/source distribution.

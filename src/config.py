@@ -1,0 +1,12 @@
+EMBEDDING_MODEL = "BAAI/bge-base-en-v1.5"
+
+LLM_MODEL = "qwen/qwen3.8-27b"
+
+TOP_K = 5
+
+MAX_TOKEN = 200
+
+RANDOM_STATE = 42
+
+TEST_SIZE = 0.20
+
