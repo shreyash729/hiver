@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 
 from src.train_intent import train_model
@@ -12,33 +13,36 @@ DATA_PATH = "data/amazonhelp_cleaned_with_intents.csv"
 class AmazonSupportAgent:
 
     def __init__(self):
-        print("Loading and training intent classifier...")
+        print("Initializing Amazon Support Agent...\n")
 
-        (
-            self.embedding_model,
-            self.intent_model,
-            _,
-            _,
-            _,
-            _
-        ) = train_model()
+        # Load saved classifier, or train it if it doesn't exist.
+        self.embedding_model, self.intent_model = train_model()
 
-        print("\nLoading historical support cases...")
-
+        # Load the complete dataset.
         df = pd.read_csv(DATA_PATH)
 
-        # Historical retrieval cases are the rows without manual labels.
+        # Only unlabelled historical cases are used for retrieval.
         historical_data = df[
-            df["Intent"].isna() | (df["Intent"].str.strip() == "")
+            df["Intent"].isna() |
+            (df["Intent"].str.strip() == "")
         ].copy()
 
-        self.retriever = HistoricalRetriever(historical_data)
+        print(
+            f"\nHistorical retrieval cases: "
+            f"{len(historical_data)}"
+        )
 
-        print("\nAgent ready.")
+        # HistoricalRetriever loads cached embeddings if available.
+        self.retriever = HistoricalRetriever(
+            historical_data
+        )
+
+        print("\nAmazon Support Agent ready.")
+
 
     def predict_intent(self, customer_message):
         """
-        Predict the intent and confidence for a customer message.
+        Predict intent and classifier confidence.
         """
 
         embedding = self.embedding_model.encode(
@@ -46,38 +50,62 @@ class AmazonSupportAgent:
             normalize_embeddings=True
         )
 
-        intent = self.intent_model.predict(embedding)[0]
+        intent = self.intent_model.predict(
+            embedding
+        )[0]
 
-        probabilities = self.intent_model.predict_proba(embedding)[0]
+        probabilities = self.intent_model.predict_proba(
+            embedding
+        )[0]
+
         confidence = probabilities.max()
 
         return intent, float(confidence)
 
+
     def run(self, customer_message, top_k=5):
         """
-        Run the complete Amazon support agent pipeline.
+        Run the complete support-agent pipeline.
         """
 
+        # -----------------------------------------------------
         # 1. Intent classification
-        intent, confidence = self.predict_intent(customer_message)
+        # -----------------------------------------------------
 
+        intent, confidence = self.predict_intent(
+            customer_message
+        )
+
+        # -----------------------------------------------------
         # 2. Historical retrieval
+        # -----------------------------------------------------
+
         historical_cases = self.retriever.retrieve_cases(
             customer_message,
             top_k=top_k
         )
 
+        # -----------------------------------------------------
         # 3. Grounded response generation
+        # -----------------------------------------------------
+
         generated_response = generate_response(
             customer_message,
             historical_cases
         )
 
+        # -----------------------------------------------------
         # 4. Escalation decision
+        # -----------------------------------------------------
+
         escalation = decide_escalation(
             customer_message,
             generated_response
         )
+
+        # -----------------------------------------------------
+        # 5. Return structured result
+        # -----------------------------------------------------
 
         return {
             "customer_message": customer_message,

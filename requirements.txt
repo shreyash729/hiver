@@ -10,3 +10,4 @@ langid
 re
 html
 os
+joblib

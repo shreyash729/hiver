@@ -1,5 +1,6 @@
+import os
+import joblib
 import pandas as pd
-import numpy as np
 
 from sentence_transformers import SentenceTransformer
 from sklearn.model_selection import train_test_split
@@ -9,6 +10,13 @@ import config
 
 DATA_PATH = "data/amazonhelp_cleaned_with_intents.csv"
 MODEL_NAME = config.EMBEDDING_MODEL
+
+ARTIFACT_DIR = "artifacts"
+CLASSIFIER_PATH = os.path.join(
+    ARTIFACT_DIR,
+    "intent_model.joblib"
+)
+
 RANDOM_STATE = 42
 
 
@@ -16,7 +24,10 @@ def load_data():
     df = pd.read_csv(DATA_PATH)
 
     # Only manually labelled examples are used for supervised training.
-    df = df[df["Intent"].notna() & (df["Intent"].str.strip() != "")].copy()
+    df = df[
+        df["Intent"].notna() &
+        (df["Intent"].str.strip() != "")
+    ].copy()
 
     X = df["cleaned_customer_message"].astype(str)
     y = df["Intent"].astype(str)
@@ -24,7 +35,33 @@ def load_data():
     return X, y
 
 
-def train_model():
+def train_model(force_retrain=False):
+
+    os.makedirs(ARTIFACT_DIR, exist_ok=True)
+
+    # ---------------------------------------------------------
+    # Load saved classifier if it already exists
+    # ---------------------------------------------------------
+    if os.path.exists(CLASSIFIER_PATH) and not force_retrain:
+
+        print("Loading saved intent classifier...")
+
+        intent_model = joblib.load(CLASSIFIER_PATH)
+
+        # BGE model is still required to embed new customer messages.
+        embedding_model = SentenceTransformer(MODEL_NAME)
+
+        print("Saved intent classifier loaded.")
+
+        return embedding_model, intent_model
+
+
+    # ---------------------------------------------------------
+    # Train classifier
+    # ---------------------------------------------------------
+    print("No saved intent classifier found.")
+    print("Training BGE + Logistic Regression...")
+
     X, y = load_data()
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -38,7 +75,6 @@ def train_model():
     print(f"Training examples: {len(X_train)}")
     print(f"Test examples: {len(X_test)}")
 
-    # BGE sentence embeddings
     embedding_model = SentenceTransformer(MODEL_NAME)
 
     X_train_embeddings = embedding_model.encode(
@@ -53,20 +89,32 @@ def train_model():
         show_progress_bar=True
     )
 
-    # Final supervised classifier
     intent_model = LogisticRegression(
         max_iter=1000,
         class_weight="balanced",
         random_state=RANDOM_STATE
     )
 
-    intent_model.fit(X_train_embeddings, y_train)
+    intent_model.fit(
+        X_train_embeddings,
+        y_train
+    )
 
+    # ---------------------------------------------------------
+    # Evaluate
+    # ---------------------------------------------------------
     y_pred = intent_model.predict(X_test_embeddings)
 
-    accuracy = accuracy_score(y_test, y_pred)
+    accuracy = accuracy_score(
+        y_test,
+        y_pred
+    )
 
-    print(f"\nBGE + Logistic Regression Accuracy: {accuracy:.4f}")
+    print(
+        f"\nBGE + Logistic Regression Accuracy: "
+        f"{accuracy:.4f}"
+    )
+
     print("\nClassification Report:")
     print(
         classification_report(
@@ -76,14 +124,20 @@ def train_model():
         )
     )
 
-    return (
-        embedding_model,
+    # ---------------------------------------------------------
+    # Save classifier
+    # ---------------------------------------------------------
+    joblib.dump(
         intent_model,
-        X_train,
-        X_test,
-        y_train,
-        y_test
+        CLASSIFIER_PATH
     )
+
+    print(
+        f"\nIntent classifier saved to: "
+        f"{CLASSIFIER_PATH}"
+    )
+
+    return embedding_model, intent_model
 
 
 if __name__ == "__main__":
