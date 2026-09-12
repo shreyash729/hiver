@@ -1,82 +1,87 @@
 import os
 
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
 import config
 
 MODEL_NAME = config.LLM_MODEL
 
 
+SYSTEM_PROMPT = """
+You are an Amazon customer support agent.
+
+Your task is to write a helpful reply to the customer's message using
+ONLY the provided historical Amazon support responses as evidence.
+
+Rules:
+1. Do not invent policies, procedures, refunds, timelines, links, or guarantees.
+2. Do not claim that you checked the customer's account, order, or payment details.
+3. You may combine or paraphrase information from multiple historical responses.
+4. If the historical evidence does not provide a clear resolution, politely ask
+   the customer to contact Amazon support for further assistance.
+5. Keep the response concise, professional, and empathetic.
+6. Do not mention that you are using historical examples.
+"""
+
+
 def create_llm():
-    """
-    Create the Groq LLM.
+    api_key = os.getenv("GROQ_API_KEY")
 
-    The API key must be supplied through the GROQ_API_KEY
-    environment variable.
-    """
-
-    if not os.getenv("GROQ_API_KEY"):
+    if not api_key:
         raise ValueError(
             "GROQ_API_KEY environment variable is not set."
         )
 
     return ChatGroq(
         model=MODEL_NAME,
-        temperature=0
+        api_key=api_key,
+        temperature=0,
+        max_tokens=200,
+        reasoning_format="parsed",
+        max_retries=2
     )
 
 
-response_prompt = ChatPromptTemplate.from_template("""
-You are an Amazon customer support agent.
+def generate_response(customer_message, historical_cases):
+    """
+    Generate a support response grounded in retrieved historical cases.
 
-Your task is to write a helpful reply to the customer's message.
+    Parameters
+    ----------
+    customer_message : str
+        Incoming customer message.
 
-IMPORTANT RULES:
+    historical_cases : pandas.DataFrame
+        Retrieved historical cases containing:
+        - cleaned_customer_message
+        - cleaned_amazon_response
+    """
 
-1. Use ONLY the historical Amazon support responses provided below
-   as evidence.
+    evidence = []
 
-2. Do not invent policies, procedures, refunds, timelines, links,
-   or guarantees.
+    for _, row in historical_cases.iterrows():
+        evidence.append(
+            f"Customer: {row['cleaned_customer_message']}\n"
+            f"Amazon response: {row['cleaned_amazon_response']}"
+        )
 
-3. Do not claim that you checked the customer's account or order.
+    evidence_text = "\n\n---\n\n".join(evidence)
 
-4. You may combine and paraphrase information from multiple
-   historical responses.
-
-5. If the historical responses do not provide a clear resolution,
-   politely ask the customer to contact Amazon support for further
-   assistance.
-
-6. Keep the reply concise, professional, and empathetic.
-
-7. Do not mention these historical examples in your reply.
-
+    prompt = f"""
 Customer message:
 {customer_message}
 
-Historical support examples:
-{historical_examples}
+Historical Amazon support responses:
+{evidence_text}
 
-Write only the final customer-facing reply.
-""")
+Write the best possible support reply to the customer.
+Use only information supported by the historical responses.
+"""
 
+    llm = create_llm()
 
-def generate_response(llm, query, retrieved_cases):
-
-    historical_examples = "\n\n".join(
-        [
-            f"Customer: {row['cleaned_customer_message']}\n"
-            f"Amazon response: {row['cleaned_amazon_response']}"
-            for _, row in retrieved_cases.iterrows()
-        ]
-    )
-
-    chain = response_prompt | llm
-
-    response = chain.invoke({
-        "customer_message": query,
-        "historical_examples": historical_examples
-    })
+    response = llm.invoke([
+        ("system", SYSTEM_PROMPT),
+        ("human", prompt)
+    ])
 
     return response.content

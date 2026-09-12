@@ -1,67 +1,96 @@
+import os
 import json
 
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
+import config
+
+MODEL_NAME = config.LLM_MODEL
 
 
-escalation_prompt = ChatPromptTemplate.from_template("""
-You are deciding whether an Amazon customer-support message can be safely
-handled automatically using historical support evidence.
+ESCALATION_PROMPT = """
+You are deciding whether an Amazon customer-support message can be
+automatically handled or should be escalated to a human support agent.
 
-Customer message:
-{customer_message}
-
-Predicted intent:
-{intent}
-
-Historical support evidence:
-{historical_examples}
-
-Decision rules:
-
-AUTO_HANDLE:
-Choose this when the historical responses provide a clear and applicable
-resolution or next step that can be communicated without accessing the
-customer's account, order, payment, or other private information.
-
-ESCALATE:
-Choose this when resolving the issue requires account/order/payment-specific
-investigation, human intervention, or information that is not available in
-the customer message and historical evidence.
-
-Do not make assumptions about the customer's account.
-
-Return ONLY valid JSON in exactly this format:
+Return ONLY valid JSON in this format:
 
 {
   "decision": "AUTO_HANDLE" or "ESCALATE",
-  "reason": "brief explanation of why this decision was made"
+  "reason": "brief explanation"
 }
-""")
+
+Rules:
+
+AUTO_HANDLE when the issue has a clear, general resolution or next step
+that can be provided without accessing private customer information.
+
+ESCALATE when resolving the issue requires:
+- checking a specific order or account
+- accessing payment or refund details
+- investigating customer-specific information
+- human intervention
+- information that is not available in the provided context
+
+Do not assume that you have access to the customer's account, order,
+payment information, or internal Amazon systems.
+"""
 
 
-def decide_escalation(llm, query, predicted_intent, retrieved_cases):
+def create_llm():
+    api_key = os.getenv("GROQ_API_KEY")
 
-    historical_examples = "\n\n".join(
-        [
-            f"Customer: {row['cleaned_customer_message']}\n"
-            f"Amazon response: {row['cleaned_amazon_response']}"
-            for _, row in retrieved_cases.iterrows()
-        ]
+    if not api_key:
+        raise ValueError(
+            "GROQ_API_KEY environment variable is not set."
+        )
+
+    return ChatGroq(
+        model=MODEL_NAME,
+        api_key=api_key,
+        temperature=0,
+        max_tokens=200,
+        reasoning_format="parsed",
+        max_retries=2
     )
 
-    chain = escalation_prompt | llm
 
-    result = chain.invoke({
-        "customer_message": query,
-        "intent": predicted_intent,
-        "historical_examples": historical_examples
-    })
+def decide_escalation(customer_message, generated_response):
+    """
+    Decide whether the customer request should be auto-handled
+    or escalated to a human.
+    """
+
+    prompt = f"""
+Customer message:
+{customer_message}
+
+Proposed support response:
+{generated_response}
+
+Decide whether this case should be AUTO_HANDLE or ESCALATE.
+Return only the requested JSON object.
+"""
+
+    llm = create_llm()
+
+    response = llm.invoke([
+        ("system", ESCALATION_PROMPT),
+        ("human", prompt)
+    ])
+
+    raw_output = response.content.strip()
 
     try:
-        return json.loads(result.content)
+        result = json.loads(raw_output)
 
-    except json.JSONDecodeError:
+        if result.get("decision") not in {"AUTO_HANDLE", "ESCALATE"}:
+            raise ValueError("Invalid escalation decision.")
+
+        return result
+
+    except (json.JSONDecodeError, ValueError):
+        # Fail safely: if the model produces an invalid decision,
+        # escalate rather than automatically handling the case.
         return {
             "decision": "ESCALATE",
-            "reason": "The escalation decision could not be parsed reliably."
+            "reason": "The escalation model returned an invalid decision, so the case is being routed to human support."
         }
