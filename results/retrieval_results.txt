@@ -1,0 +1,65 @@
+AmazonHelp Support Agent
+Retrieval Evaluation Results
+============================
+
+Retrieval corpus
+----------------
+Historical AmazonHelp customer-response cases: 116,979
+
+Embedding model:
+BAAI/bge-base-en-v1.5
+
+Similarity:
+Cosine similarity between normalized BGE embeddings.
+
+Evaluation note
+---------------
+The historical cases do not have human intent labels.
+
+Therefore, retrieval was evaluated using intent consistency:
+a retrieved historical case is considered a hit when its
+classifier-derived intent matches the manually labelled intent
+of the held-out test query.
+
+This measures whether retrieval finds cases with similar
+intent. It is NOT a direct measure of human-rated semantic
+relevance.
+
+
+BGE Retrieval
+-------------
+
+Hit@1:  65.00%
+Hit@3:  77.50%
+Hit@5:  82.50%
+Hit@10: 90.00%
+
+
+Cross-Encoder Reranking Experiment
+----------------------------------
+
+Reranker:
+cross-encoder/ms-marco-MiniLM-L-6-v2
+
+Hit@1:  60.00%
+Hit@3:  78.75%
+Hit@5:  83.75%
+Hit@10: 90.00%
+
+
+Decision
+--------
+The cross-encoder reranker was not used in the final pipeline.
+
+It reduced Hit@1 from 65.00% to 60.00% and produced no
+improvement at Hit@10. The additional inference complexity
+was therefore not justified by the observed improvement.
+
+
+Final retrieval configuration
+-----------------------------
+Embedding model:
+BAAI/bge-base-en-v1.5
+
+Top-K:
+5

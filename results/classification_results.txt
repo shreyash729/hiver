@@ -1,0 +1,76 @@
+AmazonHelp Support Agent
+Intent Classification Results
+================================
+
+Dataset
+-------
+Brand: AmazonHelp
+Manually labelled examples: 397
+Train/test split: 80/20
+Random state: 42
+Test examples: 80
+
+Intent taxonomy
+---------------
+delivery_issue
+delivery_courier
+order_change_cancel
+item_problem
+refund_payment
+product_information
+prime
+technical
+Alexa
+support_followup
+other
+
+
+Baseline 1: Majority Class
+--------------------------
+Model: DummyClassifier(strategy="most_frequent")
+
+Accuracy: 22.50%
+
+
+Baseline 2: TF-IDF + Logistic Regression
+----------------------------------------
+Features:
+- TF-IDF word n-grams
+- ngram_range=(1, 2)
+- max_features=20,000
+- class_weight="balanced"
+
+Accuracy: 40.00%
+
+
+Final Model: BGE + Logistic Regression
+--------------------------------------
+Embedding model:
+BAAI/bge-base-en-v1.5
+
+Classifier:
+LogisticRegression(
+    max_iter=1000,
+    class_weight="balanced",
+    random_state=42
+)
+
+Accuracy: 71.25%
+
+
+Comparison
+----------
+Majority baseline:       22.50%
+TF-IDF + Logistic Reg.:  40.00%
+BGE + Logistic Reg.:     71.25%
+
+
+Interpretation
+--------------
+The BGE-based classifier substantially outperformed both the
+majority-class baseline and the TF-IDF baseline on the held-out
+80-example test set.
+
+The result should not be interpreted as broad production accuracy:
+the labelled evaluation pool is small and several intents have
+very few test examples.

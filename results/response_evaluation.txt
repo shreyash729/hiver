@@ -1,0 +1,74 @@
+AmazonHelp Support Agent
+Response Evaluation Results
+===========================
+
+Evaluation setup
+----------------
+Held-out examples evaluated: 10
+
+The examples were drawn from the manually labelled test set.
+
+Each response was evaluated by:
+1. LLM-as-judge
+2. Independent human rating
+
+
+LLM-as-Judge Rubric
+-------------------
+Each criterion is scored from 1 to 5.
+
+resolution_relevance
+    Does the response address the customer's actual problem?
+
+grounding
+    Are the claims and guidance supported by the historical
+    support evidence?
+
+helpfulness
+    Does the response provide a useful and appropriate next step?
+
+unsupported_claims
+    Does the response avoid unsupported claims, invented policies,
+    guarantees, or pretending to access the customer's account/order?
+
+overall
+    Overall quality of the support response.
+
+
+LLM Judge Results
+-----------------
+Average resolution_relevance: 4.0 / 5
+Average grounding:            4.7 / 5
+Average helpfulness:          3.8 / 5
+Average unsupported_claims:   5.0 / 5
+Average overall:              4.0 / 5
+
+
+Human vs LLM Judge Agreement
+----------------------------
+Number of examples: 10
+
+LLM overall scores:
+4, 4, 3, 4, 5, 3, 4, 4, 4, 5
+
+Human overall scores:
+4, 4, 3, 4, 5, 3, 4, 4, 4, 4
+
+Exact agreement: 90.0%
+
+Spearman correlation: 0.8845
+p-value: 0.0007
+
+
+Interpretation
+--------------
+The LLM judge showed high agreement with the independent human
+ratings on this small 10-example sample.
+
+This should be treated as initial validation rather than strong
+evidence of judge reliability because the sample size is small.
+
+One disagreement occurred on a technical-support response where
+the generated response stated that Amazon was aware of temporary
+technical problems. The human evaluator considered this claim
+insufficiently supported and scored it lower than the LLM judge.
