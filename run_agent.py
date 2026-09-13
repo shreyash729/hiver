@@ -1,3 +1,5 @@
+import os
+import sys
 import pandas as pd
 
 from src.agent import AmazonSupportAgent
@@ -8,6 +10,18 @@ OUTPUT_PATH = "agent_output.csv"
 
 
 def main():
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if not groq_api_key:
+        try:
+            groq_api_key = input("Enter your GROQ_API_KEY: ").strip().strip("'\"")
+            while not groq_api_key:
+                print("GROQ_API_KEY cannot be empty. Please enter a valid key.")
+                groq_api_key = input("Enter your GROQ_API_KEY: ").strip().strip("'\"")
+        except (KeyboardInterrupt, EOFError):
+            print("\nOperation cancelled.")
+            sys.exit(1)
+
+        os.environ["GROQ_API_KEY"] = groq_api_key
     print("Loading input data...")
 
     df = pd.read_csv(INPUT_PATH)
