@@ -40,7 +40,7 @@ Features:
 - max_features=20,000
 - class_weight="balanced"
 
-Accuracy: 40.00%
+Accuracy: 42.50%
 
 
 Final Model: BGE + Logistic Regression
@@ -61,7 +61,7 @@ Accuracy: 71.25%
 Comparison
 ----------
 Majority baseline:       22.50%
-TF-IDF + Logistic Reg.:  40.00%
+TF-IDF + Logistic Reg.:  42.50%
 BGE + Logistic Reg.:     71.25%
 
 
