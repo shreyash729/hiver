@@ -26,6 +26,7 @@ cd hiver
 python -m venv .venv
 .venv\Scripts\activate
 
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 ```
 
@@ -38,6 +39,7 @@ cd <YOUR_REPOSITORY_NAME>
 python3 -m venv .venv
 source .venv/bin/activate
 
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 ```
 
