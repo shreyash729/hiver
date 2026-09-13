@@ -12,6 +12,8 @@ The system performs three tasks:
 
 # Quick Start
 
+```Run Repo In Google Collab:``` https://colab.research.google.com/drive/1XxhVxXy9hm3I9hHuQIpMFxDQlTgCaCdf?usp=sharing&pli=1
+
 ## Installation
 
 Clone the repository and create a virtual environment.
