@@ -58,8 +58,15 @@ get it from: ```https://console.groq.com/keys```
 The main interactive demo is:
 
 ```bash
+uv run chatbot.py
+```
+### OR 
+
+```bash
 python chatbot.py
 ```
+
+
 
 Enter a customer message when prompted.
 
