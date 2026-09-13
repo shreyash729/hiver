@@ -23,8 +23,11 @@ class AmazonSupportAgent:
 
         # Only unlabelled historical cases are used for retrieval.
         historical_data = df[
-            df["Intent"].isna() |
-            (df["Intent"].str.strip() == "")
+            (
+                df["Intent"].isna()
+                | (df["Intent"].str.strip() == "")
+            )
+            & df["cleaned_customer_message"].notna()
         ].copy()
 
         print(

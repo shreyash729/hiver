@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
-import config
+import src.config as config
 
 DATA_PATH = "data/amazonhelp_cleaned_with_intents.csv"
 MODEL_NAME = config.EMBEDDING_MODEL

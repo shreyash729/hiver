@@ -7,7 +7,4 @@ langchain
 langchain-core
 langchain-groq
 langid
-re
-html
-os
 joblib

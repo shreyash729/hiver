@@ -2,7 +2,7 @@ import os
 import json
 
 from langchain_groq import ChatGroq
-import config
+import src.config as config
 
 MODEL_NAME = config.LLM_MODEL
 
