@@ -19,6 +19,7 @@ Clone the repository and create a virtual environment.
 ### Windows
 
 ```bash
+git lfs install
 git clone https://github.com/shreyash729/hiver.git
 cd hiver
 
