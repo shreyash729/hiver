@@ -2,7 +2,6 @@ pandas
 numpy
 scikit-learn
 sentence-transformers
-torch
 langchain
 langchain-core
 langchain-groq
