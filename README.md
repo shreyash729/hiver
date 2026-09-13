@@ -10,6 +10,124 @@ The system performs three tasks:
 
 ---
 
+# Quick Start
+
+## Installation
+
+Clone the repository and create a virtual environment.
+
+### Windows
+
+```bash
+git clone https://github.com/shreyash729/hiver.git
+cd hiver
+
+python -m venv .venv
+.venv\Scripts\activate
+
+pip install -r requirements.txt
+```
+
+### Linux / macOS
+
+```bash
+git clone <YOUR_GITHUB_REPOSITORY_URL>
+cd <YOUR_REPOSITORY_NAME>
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+## API Key
+
+The response-generation, escalation, and response-evaluation components use Groq.
+
+get it from: ```https://console.groq.com/keys```
+
+
+
+## Run the Agent
+
+The main interactive demo is:
+
+```bash
+python chatbot.py
+```
+
+Enter a customer message when prompted.
+
+The agent displays:
+
+- predicted intent and confidence;
+- top 5 historical AmazonHelp cases;
+- similarity scores;
+- generated response;
+- AUTO_HANDLE / ESCALATE decision;
+- escalation reason;
+- LLM judge result.
+
+Enter `-1` to exit.
+
+## Run Evaluation
+
+The repository contains three evaluation scripts.
+
+### 1. Intent Classification
+
+```bash
+python evaluation/evaluate_classifier.py
+```
+
+Evaluates the intent classifier and reports the classification metrics and baselines.
+
+### 2. Historical Retrieval
+
+```bash
+python evaluation/evaluate_retrieval.py
+```
+
+Evaluates retrieval using intent-consistency:
+
+```text
+Hit@1
+Hit@3
+Hit@5
+Hit@10
+```
+
+The script uses the cached classifier and historical embeddings when available.
+
+### 3. Response Generation + LLM Judge
+
+```bash
+python evaluation/evaluate_responses.py
+```
+
+This requires `GROQ_API_KEY`.
+
+It generates responses for held-out examples, evaluates them with the LLM judge, and saves the generated evaluation results to:
+
+```text
+results/response_evaluation_generated.csv
+```
+
+## Precomputed Artifacts
+
+The repository includes:
+
+```text
+artifacts/intent_model.joblib
+artifacts/historical_embeddings.npy
+```
+
+These cached artifacts allow the interactive agent, retrieval evaluation, and response evaluation to avoid regenerating the full set of 116,979 historical embeddings.
+
+The classification evaluator intentionally retrains the classifier so that the reported classification benchmark can be reproduced independently.
+
+---
+
 ## 1. Problem
 
 The goal of this project is to build an AI support agent for one brand from the Customer Support on Twitter dataset.
@@ -205,6 +323,8 @@ Because this project focuses on an English-language customer-support agent, I re
 
 This keeps the intent taxonomy and evaluation consistent with the scope of the project.
 
+* ALL EDA STEPS ARE IN NOTEBOOK ``` Notebooks/prepare_amazonhelp_data.ipynb```
+* ```collab link: ```https://colab.research.google.com/drive/1dzpz4EoXlFiRx0h31VZa9MgJsNngiP-d?usp=sharing
 ---
 
 # 7. Final Dataset
@@ -223,7 +343,7 @@ Intent
 
 The dataset consists of:
 
-- **397 labelled examples**
+- **397 labelled examples** (Golden evaluation set)
 - **116,979 historical examples**
 
 The 397 labelled examples were manually assigned to support intents.
@@ -307,7 +427,7 @@ Logistic Regression
 
 This achieves:
 
-**40.0% accuracy**
+**42.5% accuracy**
 
 ---
 
@@ -368,25 +488,7 @@ Weighted F1: 0.722
 The BGE classifier improves over:
 
 - the majority baseline by **48.75 percentage points**;
-- the TF-IDF baseline by **31.25 percentage points**.
-
-Per-class results:
-
-| Intent | Precision | Recall | F1 |
-|---|---:|---:|---:|
-| Alexa | 0.000 | 0.000 | 0.000 |
-| delivery_courier | 1.000 | 0.750 | 0.857 |
-| delivery_issue | 0.833 | 0.833 | 0.833 |
-| item_problem | 0.625 | 1.000 | 0.769 |
-| order_change_cancel | 0.167 | 0.500 | 0.250 |
-| other | 0.538 | 0.583 | 0.560 |
-| prime | 0.800 | 1.000 | 0.889 |
-| product_information | 0.667 | 0.500 | 0.571 |
-| refund_payment | 1.000 | 0.625 | 0.769 |
-| support_followup | 0.636 | 0.636 | 0.636 |
-| technical | 1.000 | 0.714 | 0.833 |
-
-Rare classes should be interpreted cautiously because some have very few examples in the 80-example test set.
+- the TF-IDF baseline by **28.75 percentage points**.
 
 ---
 
@@ -1024,167 +1126,6 @@ Run response generation and human/LLM evaluation over a larger held-out set, esp
 
 ---
 
-# 25. Repository Structure
-
-A recommended repository structure is:
-
-```text
-amazonhelp-support-agent/
-│
-├── README.md
-├── requirements.txt
-│
-├── data/
-│   └── amazonhelp_cleaned_with_intents.csv
-│
-├── notebooks/
-│   └── amazonhelp_support_agent.ipynb
-│
-├── src/
-│   ├── preprocessing.py
-│   ├── intent_classifier.py
-│   ├── retrieval.py
-│   ├── response_generator.py
-│   ├── escalation.py
-│   └── evaluation.py
-│
-└── results/
-    ├── classification_results.txt
-    ├── retrieval_results.txt
-    └── judge_results.txt
-```
-
-The notebook contains the complete development/evaluation workflow.
-
-The `src/` directory is intended to contain the cleaned implementation of the final pipeline.
-
----
-
-# 26. Installation
-
-Create a Python environment and install the required packages:
-
-```bash
-pip install -r requirements.txt
-```
-
-The main libraries used by the project are:
-
-```text
-pandas
-numpy
-scikit-learn
-sentence-transformers
-langchain
-langchain-groq
-torch
-```
-
----
-
-# 27. Environment Variables
-
-The response-generation and evaluation components use Groq.
-
-Set:
-
-```bash
-export GROQ_API_KEY="your-api-key"
-```
-
-On Windows:
-
-```powershell
-set GROQ_API_KEY=your-api-key
-```
-
-Alternatively, the notebook can request the key interactively using `getpass`.
-
----
-
-# 28. Running the Pipeline
-
-The complete pipeline is:
-
-```text
-1. Load cleaned dataset
-2. Separate labelled and historical data
-3. Train BGE + Logistic Regression
-4. Generate historical BGE embeddings
-5. Classify incoming message
-6. Retrieve top-K historical cases
-7. Generate grounded response
-8. Decide AUTO_HANDLE / ESCALATE
-9. Evaluate generated response
-```
-
-Example:
-
-```python
-result = evaluate_response(
-    "hey i havent recive my pacakge",
-    top_k=10
-)
-
-print("Intent:", result["intent"])
-print("Response:", result["response"])
-print("Escalation:", result["escalation"])
-print("Judge:", result["judge_scores"])
-```
-
-Example output:
-
-```text
-Intent: delivery_issue
-
-Response:
-I am sorry to hear that you have not received your package.
-To help us look into this, please share your order details here
-so we can check the status and assist you further.
-
-Escalation:
-{
-  "decision": "ESCALATE",
-  "reason": "The customer reports a missing package, which requires checking specific order status and tracking information..."
-}
-```
-
----
-
-# 29. Reproducibility
-
-The main headline result to reproduce is:
-
-```text
-BGE + Logistic Regression
-Accuracy: 71.25%
-```
-
-The baseline results are:
-
-```text
-Majority baseline:          22.5%
-TF-IDF + Logistic Regression: 40.0%
-```
-
-The retrieval results are:
-
-```text
-BGE Hit@1:  65.0%
-BGE Hit@3:  77.5%
-BGE Hit@5:  82.5%
-BGE Hit@10: 90.0%
-```
-
-The response evaluation results are:
-
-```text
-Overall response score: 4.0 / 5
-Human/LLM exact agreement: 90%
-Spearman correlation: 0.8845
-```
-
----
 
 # 30. Limitations
 
@@ -1192,12 +1133,12 @@ This project is a prototype rather than a production customer-support system.
 
 The main limitations are:
 
-- relatively small labelled evaluation/development set;
-- very small test support for some intents;
-- single-label intent classification for inherently multi-intent customer messages;
-- retrieval evaluation based primarily on intent consistency rather than human relevance;
-- small response-evaluation sample;
-- no direct access to Amazon customer accounts or orders;
+- relatively small labelled evaluation/development set.
+- very small test support for some intents.
+- single-label intent classification for inherently multi-intent customer messages.
+- retrieval evaluation based primarily on intent consistency rather than human relevance.
+- small response-evaluation sample.
+- no direct access to Amazon customer accounts or orders.
 - escalation evaluation is not yet backed by a separately human-labelled escalation benchmark.
 
 These limitations are intentionally reported because the objective is to understand where the system can and cannot be trusted.
@@ -1211,7 +1152,7 @@ The final system combines supervised intent classification, semantic retrieval, 
 The most important result is that BGE + Logistic Regression substantially outperforms both the majority-class and TF-IDF baselines:
 
 ```text
-22.5%  →  40.0%  →  71.25%
+22.5%  →  42.5%  →  71.25%
 Majority   TF-IDF     BGE + LR
 ```
 
@@ -1235,7 +1176,7 @@ Models/libraries used:
 - `sentence-transformers` — embedding inference
 - `scikit-learn` — Logistic Regression, TF-IDF and evaluation
 - `cross-encoder/ms-marco-MiniLM-L-6-v2` — reranker experiment
-- Groq / `llama-3.3-70b-versatile` — response generation and LLM evaluation
+- Groq / `qwen/qwen3.8-27b` — response generation, escalation, and LLM evaluation
 - LangChain — LLM integration
 
 No external intent taxonomy was used. The 11 support intents were defined from the AmazonHelp data used in this project.
