@@ -33,8 +33,9 @@ pip install -r requirements.txt
 ### Linux / macOS
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd <YOUR_REPOSITORY_NAME>
+git lfs install
+git clone https://github.com/shreyash729/hiver.git
+cd hiver
 
 python3 -m venv .venv
 source .venv/bin/activate
