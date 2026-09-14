@@ -49,7 +49,7 @@ uv pip install -r requirements.txt
 
 The response-generation, escalation, and response-evaluation components use Groq.
 
-get it from: ```https://console.groq.com/keys```
+get it from: https://console.groq.com/keys
 
 
 
